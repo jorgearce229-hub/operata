@@ -43,7 +43,7 @@ export default function EconomicCalendar() {
     setError(null)
     const { from, to } = getDateRange()
     try {
-      const url = `${FCS_URL}?symbol=${ALL_CURRENCIES}&from=${from}&to=${to}&access_key=${FCS_KEY}`
+      const url = `/api/calendar?from=${from}&to=${to}`
       const res = await fetch(url)
       const data = await res.json()
 
