@@ -57,9 +57,9 @@ export default function EconomicCalendar() {
           forecast: String(e.forecast||''),
           actual: String(e.actual||''),
         }
-      }).filter(e => e.date && e.event)
+      }).filter(e => e.date)
         .sort((a,b) => (a.date+a.time)<(b.date+b.time)?-1:1)
-
+console.log('Eventos cargados:', parsed.length, parsed[0])
       setEvents(parsed)
       setLastFetch(new Date().toLocaleTimeString('es-MX'))
     } catch (err) {
