@@ -25,7 +25,12 @@ export default function EconomicCalendar() {
     return { from: fmt(now), to: fmt(end) }
   }
 
-  const parseImp = i => parseInt(i)===3?'high':parseInt(i)===2?'medium':'low'
+  const parseImp = i => {
+    const n = parseInt(i)
+    if (n >= 2) return 'high'
+    if (n === 1) return 'medium'
+    return 'low'
+  }
 
   const fetchCalendar = async () => {
     setLoading(true); setError(null)
