@@ -53,6 +53,7 @@ export default function CalendarHeatmap({ trades }) {
   const dayLabels = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
 
   const [hovered, setHovered] = useState(null)
+  const [selectedDay, setSelectedDay] = useState(null)
 
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
@@ -99,10 +100,11 @@ export default function CalendarHeatmap({ trades }) {
 
           return (
             <div key={day} onMouseEnter={() => setHovered(dateStr)} onMouseLeave={() => setHovered(null)}
+              onClick={() => data && setSelectedDay(selectedDay === dateStr ? null : dateStr)}
               style={{
                 position: 'relative', borderRadius: '8px', padding: '6px 4px',
                 background: data ? cellColor(data.pnl) : C.bg,
-                border: `1px solid ${isToday ? C.accent : isHovered ? C.muted : 'transparent'}`,
+                border: `1px solid ${selectedDay === dateStr ? C.accent : isToday ? C.accent : isHovered ? C.muted : 'transparent'}`,
                 minHeight: '52px', cursor: data ? 'pointer' : 'default',
                 transition: 'all 0.1s'
               }}>
@@ -131,6 +133,53 @@ export default function CalendarHeatmap({ trades }) {
           )
         })}
       </div>
+
+      {/* Day detail panel */}
+      {selectedDay && (() => {
+        const dayTrades = trades.filter(t => (t.close_date || t.entry_date) === selectedDay)
+        const dayPnl = dayTrades.reduce((s, t) => s + (t.pnl || 0), 0)
+        return (
+          <div style={{ marginTop: '16px', background: C.bg, border: `1px solid ${C.border}`, borderRadius: '10px', padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px' }}>{selectedDay}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: dayPnl >= 0 ? C.green : C.red }}>
+                  {dayPnl >= 0 ? '+' : ''}${dayPnl.toFixed(2)}
+                </span>
+                <button onClick={() => setSelectedDay(null)} style={{ padding: '2px 8px', borderRadius: '6px', border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer', fontSize: '12px' }}>✕</button>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {dayTrades.map((t, i) => {
+                const resColor = t.result === 'TP' ? C.green : t.result === 'SL' ? C.red : C.blue
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: C.card, borderRadius: '8px', border: `1px solid ${C.border}` }}>
+                    {t.screenshot_url && (
+                      <img src={t.screenshot_url} alt="setup" onClick={() => window.open(t.screenshot_url, '_blank')}
+                        style={{ width: '56px', height: '36px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer', border: `1px solid ${C.border}`, flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px' }}>{t.instrument}</span>
+                        <span style={{ padding: '1px 7px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: t.direction === 'LONG' ? C.greenBg : C.redBg, color: t.direction === 'LONG' ? C.green : C.red }}>{t.direction}</span>
+                        <span style={{ padding: '1px 7px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: resColor + '20', color: resColor }}>{t.result}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: C.dim }}>
+                        Entrada: {t.entry_price || '—'} · SL: {t.stop_loss || '—'} · TP: {t.take_profit || '—'}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: (t.pnl || 0) >= 0 ? C.green : C.red }}>{(t.pnl || 0) >= 0 ? '+' : ''}${(t.pnl || 0).toFixed(2)}</div>
+                      <div style={{ fontSize: '11px', color: C.dim }}>{t.r_multiple ? `${t.r_multiple >= 0 ? '+' : ''}${t.r_multiple}R` : '—'}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {dayTrades.length === 0 && <div style={{ color: C.dim, fontSize: '13px', textAlign: 'center', padding: '12px' }}>Sin operaciones este día</div>}
+          </div>
+        )
+      })()}
 
       {/* Legend */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '14px', fontSize: '11px', color: C.dim }}>
